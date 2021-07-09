@@ -44,4 +44,16 @@ defmodule ImgWizardTest do
     assert_raise UnhandledFileTypeError, fn -> get_metadata!.(:non_img) end
     assert_raise FileReadError, fn -> get_metadata!.(:non_existent) end
   end
+
+  test "resize/3" do
+    defmodule ResizeMock do
+      def resize(path, opts) do
+        send(self(), %{path: path, opts: opts})
+      end
+    end
+
+    ImgWizard.resize("some_path", ResizeMock, foo: :bar)
+
+    assert_receive %{path: "some_path", opts: [foo: :bar]}
+  end
 end

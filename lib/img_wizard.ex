@@ -82,4 +82,14 @@ defmodule ImgWizard do
       result -> {:ok, result}
     end
   end
+
+  @doc """
+  Resizes the image using the provided adapter and options.
+  """
+
+  @spec resize(String.t(), atom, Keyword.t()) :: {:ok, term} | {:error, term}
+  def resize(path, adapter, opts \\ [])
+      when is_binary(path) and is_atom(adapter) and is_list(opts) do
+    adapter.resize(path, opts)
+  end
 end
