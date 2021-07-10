@@ -5,9 +5,14 @@ defmodule ImgWizard.Application do
 
   use Application
 
+  require Logger
+
   def start(_type, _args) do
+    port = Application.get_env(:img_wizard, :port)
+    Logger.info("Starting API on port #{port}")
+
     children = [
-      {Plug.Cowboy, scheme: :http, plug: ImgWizardApi.Endpoint, options: [port: 4040]}
+      {Plug.Cowboy, scheme: :http, plug: ImgWizardApi.Endpoint, options: [port: port]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
