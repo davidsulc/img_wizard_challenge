@@ -15,6 +15,15 @@ defmodule ImgWizard.FileReadError do
   end
 end
 
+defmodule ImgWizard.OperationError do
+  defexception [:message]
+
+  @opaque t() :: %__MODULE__{}
+
+  @impl true
+  def exception(opts), do: %__MODULE__{message: Keyword.fetch!(opts, :message)}
+end
+
 defmodule ImgWizard.UnhandledFileTypeError do
   @msg "unhandled file type: make sure this is an image file"
   defexception message: @msg

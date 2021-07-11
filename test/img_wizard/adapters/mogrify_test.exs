@@ -4,6 +4,8 @@ defmodule ImgWizard.Adapters.MogrifyTest do
 
   import ImgWizard.Adapters.Mogrify
 
+  alias ImgWizard.OperationError
+
   setup do
     filename = "logo_copy.png"
 
@@ -21,8 +23,11 @@ defmodule ImgWizard.Adapters.MogrifyTest do
 
     assert(
       {:error,
-       "mogrify: unable to open image `does_not_exist.png': No such file or directory" <>
-         _} = resize("does_not_exist.png")
+       %OperationError{
+         message:
+           "mogrify: unable to open image `does_not_exist.png': No such file or directory" <>
+             _
+       }} = resize("does_not_exist.png")
     )
   end
 

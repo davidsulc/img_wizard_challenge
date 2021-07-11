@@ -3,7 +3,7 @@ defmodule ImgWizard.Adapters.Mogrify do
   Implements `ImgWizard.Adapters` behaviour using ImageMagick's mogrify.
   """
 
-  alias ImgWizard.Adapter
+  alias ImgWizard.{Adapter, OperationError}
 
   @behaviour Adapter
 
@@ -34,7 +34,7 @@ defmodule ImgWizard.Adapters.Mogrify do
 
     case result do
       {_, 0} -> {:ok, ""}
-      {error, _} -> {:error, error}
+      {error, _} -> {:error, OperationError.exception(message: error)}
     end
   end
 
