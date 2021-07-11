@@ -9,7 +9,7 @@ suite of tools must be available on your system. Get it here: [https://imagemagi
 
 ## Quick Start
 
-From within the project directory, create a release (Unix systems only at this time) with `mix release`.
+From within the project directory, create a release (Unix systems only at this time) with `MIX_ENV=prod mix release`.
 
 You can then start the server on the port of your choosing (e.g. port 4040):
 
