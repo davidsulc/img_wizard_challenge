@@ -29,5 +29,15 @@ defmodule ImgWizardApi.EndpointTest do
 
     assert %{error: "FileReadError", message: "unable to open file"} =
              Jason.decode!(body, keys: :atoms)
+
+    assert {400, _headers, body} =
+             conn(:put, "/info")
+             |> Endpoint.call([])
+             |> sent_resp()
+
+    assert %{
+             error: "NoImageUploaded",
+             message: "an image must be provided within the 'image' body param."
+           } = Jason.decode!(body, keys: :atoms)
   end
 end
