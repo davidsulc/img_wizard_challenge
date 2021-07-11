@@ -12,7 +12,9 @@ defmodule ImgWizardApi.Endpoint do
   put "/info" do
     with {:ok, path} <- image_path(conn),
          {:ok, %MetaInfo{} = info} <- metadata_extractor(conn).(path) do
-      send_resp(conn, 200, info |> Map.from_struct() |> Jason.encode!())
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(200, info |> Map.from_struct() |> Jason.encode!())
     else
       {:error, error} -> send_error(conn, error)
     end
@@ -30,7 +32,9 @@ defmodule ImgWizardApi.Endpoint do
              width: width,
              height: height
            ) do
-      send_file(conn, 200, path)
+      conn
+      |> put_resp_content_type("application/octet-stream")
+      |> send_file(200, path)
     else
       {:error, error} -> send_error(conn, error)
     end
@@ -48,7 +52,9 @@ defmodule ImgWizardApi.Endpoint do
       |> Map.put(:error, format_error_name(type))
       |> Jason.encode!()
 
-    send_resp(conn, status(type), result)
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(status(type), result)
   end
 
   defp metadata_extractor(conn) do
