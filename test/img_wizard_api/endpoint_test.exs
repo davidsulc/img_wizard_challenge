@@ -5,16 +5,40 @@ defmodule ImgWizardApi.EndpointTest do
   alias ImgWizard.{FileReadError, MetaInfo, UnhandledFileTypeError}
   alias ImgWizardApi.Endpoint
 
+  defp parse_response({status, headers, body}) do
+    body =
+      case json_content_type?(headers) do
+        true -> Jason.decode!(body, keys: :atoms)
+        false -> body
+      end
+
+    {status, body}
+  end
+
+  defp json_content_type?(headers) when is_list(headers) do
+    json_header =
+      Enum.find(headers, fn
+        {"content-type", type} -> String.starts_with?(type, "application/json;")
+        _ -> false
+      end)
+
+    case json_header do
+      nil -> false
+      _ -> true
+    end
+  end
+
   defp test_no_upload(route) do
-    assert {400, _headers, body} =
+    assert {400, body} =
              conn(:put, route)
              |> Endpoint.call([])
              |> sent_resp()
+             |> parse_response()
 
     assert %{
              error: "NoImageUploaded",
              message: "an image must be provided within the 'image' body param."
-           } = Jason.decode!(body, keys: :atoms)
+           } = body
   end
 
   test "PUT /info" do
@@ -23,24 +47,23 @@ defmodule ImgWizardApi.EndpointTest do
       |> assign(:metadata_extractor, fn _ -> resp end)
       |> Endpoint.call([])
       |> sent_resp()
+      |> parse_response()
     end
 
     expected = %{mimetype: "image/png", size: 1234, dimensions: %{width: 12, height: 34}}
 
-    assert {200, _headers, body} = call_with_response.({:ok, struct(MetaInfo, expected)})
-    assert ^expected = Jason.decode!(body, keys: :atoms)
+    assert {200, ^expected} = call_with_response.({:ok, struct(MetaInfo, expected)})
 
-    assert {422, _headers, body} = call_with_response.({:error, %UnhandledFileTypeError{}})
+    assert {422, body} = call_with_response.({:error, %UnhandledFileTypeError{}})
 
     assert %{
              error: "UnhandledFileTypeError",
              message: "unhandled file type: make sure this is an image file"
-           } = Jason.decode!(body, keys: :atoms)
+           } = body
 
-    assert {500, _headers, body} = call_with_response.({:error, %FileReadError{}})
+    assert {500, body} = call_with_response.({:error, %FileReadError{}})
 
-    assert %{error: "FileReadError", message: "unable to open file"} =
-             Jason.decode!(body, keys: :atoms)
+    assert %{error: "FileReadError", message: "unable to open file"} = body
 
     test_no_upload("/info")
   end
@@ -67,7 +90,7 @@ defmodule ImgWizardApi.EndpointTest do
     test "requires width and height parameters as positive integers", %{upload: upload} do
       test_resize_query = &test_resize(&1, upload)
 
-      assert {200, _header, _body} = test_resize_query.("width=12&height=23")
+      assert {200, _body} = test_resize_query.("width=12&height=23")
 
       failures = [
         "",
@@ -80,7 +103,7 @@ defmodule ImgWizardApi.EndpointTest do
       ]
 
       for failure <- failures do
-        assert {400, _header, _body} = test_resize_query.(failure)
+        assert {400, _body} = test_resize_query.(failure)
       end
     end
 
@@ -96,14 +119,15 @@ defmodule ImgWizardApi.EndpointTest do
       conn
       |> Endpoint.call([])
       |> sent_resp()
+      |> parse_response()
     end
 
     test "requires upload to be an image", %{upload: upload} do
       test_resize_upload = &test_resize("width=12&height=23", &1)
 
-      assert {200, _header, _body} = test_resize_upload.(upload)
+      assert {200, _body} = test_resize_upload.(upload)
 
-      assert {400, _header, _body} = test_resize_upload.(%{upload | content_type: "text/plain"})
+      assert {400, _body} = test_resize_upload.(%{upload | content_type: "text/plain"})
     end
 
     test "resizes the image", %{upload: upload} do
@@ -121,8 +145,7 @@ defmodule ImgWizardApi.EndpointTest do
       ]
 
       for {width, height} <- scenarios do
-        assert {200, _header, body} =
-                 test_resize("height=#{height}&width=#{width}", upload, false)
+        assert {200, body} = test_resize("height=#{height}&width=#{width}", upload, false)
 
         # Fixture image is square and mogrify interprets the provided dimension as a maximum
         # bounding box while preserving the aspect ratio. Therefore, the resized dimensions
@@ -138,13 +161,12 @@ defmodule ImgWizardApi.EndpointTest do
       {:ok, path} = Plug.Upload.random_file("resize_test")
       File.cp!(StaticAsset.path("foobar.txt"), path)
 
-      assert {500, _header, body} =
-               test_resize("height=40&width=40", %{upload | path: path}, false)
+      assert {500, body} = test_resize("height=40&width=40", %{upload | path: path}, false)
 
       assert %{
                error: "OperationError",
                message: "mogrify: no decode delegate for this image format" <> _
-             } = Jason.decode!(body, keys: :atoms)
+             } = body
     end
   end
 end
