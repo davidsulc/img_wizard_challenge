@@ -37,7 +37,7 @@ defmodule ImgWizard do
   end
 
   @doc """
-  Returns `{:ok, metadata}`, where `metadata` is a `t:ImgWizard.MetaInfo/0` containing image information, or `{:error, reason}` if an error occurs.
+  Returns `{:ok, metadata}`, where `metadata` is a `t:ImgWizard.MetaInfo.t/0` containing image information, or `{:error, reason}` if an error occurs.
   """
 
   @spec metadata(Path.t()) :: {:ok, MetaInfo.t()} | {:error, exception}
