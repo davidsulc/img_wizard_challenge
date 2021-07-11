@@ -10,7 +10,9 @@ defmodule ImgWizardApi.Endpoint do
   put "/info" do
     path = get_image_path(conn)
 
-    case ImgWizard.metadata(path) do
+    metadata_extractor = metadata_extractor(conn)
+
+    case metadata_extractor.(path) do
       {:ok, %MetaInfo{} = info} ->
         result =
           info
@@ -33,6 +35,13 @@ defmodule ImgWizardApi.Endpoint do
 
   match _ do
     send_resp(conn, 404, "Not implemented")
+  end
+
+  defp metadata_extractor(conn) do
+    case conn.assigns[:metadata_extractor] do
+      nil -> &ImgWizard.metadata/1
+      extractor -> extractor
+    end
   end
 
   defp get_image_path(%Plug.Conn{body_params: %{"image" => %{path: path}}}), do: path
