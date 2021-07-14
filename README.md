@@ -73,3 +73,9 @@ being added. Versioning could naturally be added, but the intent was to keep thi
 The original idea was to have `ImgWizard` be a standalone img transformation package, and have the separate API
 package depend on it, but I decided against that in the end. Given the scope of the code challenge, it didn't
 really make sense to add the overhead of having an external package, or implementing an umbrella app.
+
+### Robustness
+
+A circuit breaker pattern (https://en.wikipedia.org/wiki/Circuit_breaker_design_pattern) should probably be implemented,
+so that requests being made when the system is inoperable (e.g. tmp directory unwriteable) can be processed without
+further load on recovering subsystems.
