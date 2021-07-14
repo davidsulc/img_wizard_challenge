@@ -11,7 +11,8 @@ defmodule ImgWizardApi.Endpoint do
 
   put "/info" do
     with {:ok, path} <- image_path(conn),
-         {:ok, %MetaInfo{} = info} <- metadata_extractor(conn).(path) do
+         %Task{} = task <- Task.async(fn -> metadata_extractor(conn).(path) end),
+         {:ok, %MetaInfo{} = info} <- Task.await(task) do
       conn
       |> put_resp_content_type("application/json")
       |> send_resp(200, info |> Map.from_struct() |> Jason.encode!())
@@ -25,13 +26,16 @@ defmodule ImgWizardApi.Endpoint do
          :ok <- validate_image_content_type(conn),
          {:ok, dimensions} <- requested_dimensions(conn),
          {:ok, %{width: width, height: height}} <- parse_dimensions(dimensions),
-         {:ok, _} <-
-           resizer(conn).(
-             path,
-             ImgWizard.Adapters.Mogrify,
-             width: width,
-             height: height
-           ) do
+         %Task{} = task <-
+           Task.async(fn ->
+             resizer(conn).(
+               path,
+               ImgWizard.Adapters.Mogrify,
+               width: width,
+               height: height
+             )
+           end),
+         {:ok, _} <- Task.await(task) do
       conn
       |> put_resp_content_type("application/octet-stream")
       |> send_file(200, path)
