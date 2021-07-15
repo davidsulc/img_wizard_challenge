@@ -1,6 +1,6 @@
 # ImgWizard
 
-This is a small image resizer, built as a code challenge. Do not use this in production.
+This is a small image resizer, built as a code challenge (see CHALLENGE.md). Do not use this in production.
 
 ## Setup
 
